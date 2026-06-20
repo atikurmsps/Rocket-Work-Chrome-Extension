@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>New Tab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- ===================== SIDEBAR ===================== -->
+    <aside class="sidebar">
+      <div class="sidebar-scroll" id="sidebarScroll"></div>
+    </aside>
+
+    <!-- ===================== MAIN ===================== -->
+    <main class="main">
+      <h1 class="hero">What's the plan for <span class="accent">today?</span></h1>
+
+      <section class="quick">
+        <div class="quick-grid" id="quickGrid"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ===================== ADD-LINK MODAL ===================== -->
+  <div class="modal-overlay" id="linkModal">
+    <div class="modal">
+      <h3 id="modalTitle">Add Quick Access</h3>
+      <label>Name</label>
+      <input type="text" id="linkName" placeholder="e.g. Notion" />
+      <label>URL</label>
+      <input type="text" id="linkUrl" placeholder="https://notion.so" />
+      <label>Logo</label>
+      <div class="logo-row">
+        <div class="logo-preview" id="logoPreview"></div>
+        <div class="logo-controls">
+          <button type="button" class="btn-ghost" id="logoUploadBtn">Upload image</button>
+          <button type="button" class="btn-ghost" id="logoClearBtn">Use site favicon</button>
+          <input type="file" id="logoFile" accept="image/*" hidden />
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="linkCancel">Cancel</button>
+        <button class="btn-primary" id="linkSave">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="newtab.js"></script>
+</body>
+</html>
