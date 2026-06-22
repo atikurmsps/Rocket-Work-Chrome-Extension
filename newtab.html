@@ -4,12 +4,23 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>New Tab</title>
+  <link rel="icon" type="image/png" href="icons/chrome.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <!-- ===================== TOP-RIGHT TOOLBAR ===================== -->
+  <div class="toolbar">
+    <button class="tool-btn" id="helpBtn" title="Help" aria-label="Help">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+    </button>
+    <button class="tool-btn" id="settingsBtn" title="Settings" aria-label="Settings">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+    </button>
+  </div>
+
   <div class="app">
     <!-- ===================== SIDEBAR ===================== -->
     <aside class="sidebar">
@@ -46,6 +57,49 @@
       <div class="modal-actions">
         <button class="btn-ghost" id="linkCancel">Cancel</button>
         <button class="btn-primary" id="linkSave">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== HELP MODAL ===================== -->
+  <div class="modal-overlay" id="helpModal">
+    <div class="modal modal-wide">
+      <h3>How to use</h3>
+      <ul class="help-list">
+        <li><b>Add a task</b> — click <em>+ New Task</em> in the sidebar.</li>
+        <li><b>Edit a task</b> — double-click its title.</li>
+        <li><b>Complete a task</b> — click the round checkbox. Done tasks move to <em>Completed</em>.</li>
+        <li><b>Favorite</b> — click the star on a task row.</li>
+        <li><b>Delete a task</b> — hover the row, click the trash icon.</li>
+        <li><b>Add a quick link</b> — click the <em>+ Add</em> tile, set name, URL and logo.</li>
+        <li><b>Edit / delete a link</b> — right-click the tile.</li>
+        <li><b>Reorder links</b> — drag a tile onto another.</li>
+        <li><b>Backup your data</b> — open <em>Settings</em> and use Export. Import restores it on any device so you never lose tasks.</li>
+      </ul>
+      <div class="modal-actions">
+        <button class="btn-primary" id="helpClose">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== SETTINGS MODAL ===================== -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal modal-wide">
+      <h3>Settings</h3>
+      <p class="settings-desc">Export your tasks and quick links to a file as a backup, then import it anytime to restore — so you never lose a task.</p>
+
+      <div class="settings-section">
+        <div class="settings-label">Backup</div>
+        <div class="settings-row">
+          <button class="btn-ghost" id="exportBtn">Export data</button>
+          <button class="btn-ghost" id="importBtn">Import data</button>
+          <input type="file" id="importFile" accept="application/json,.json" hidden />
+        </div>
+        <div class="settings-note" id="settingsNote"></div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-ghost" id="settingsClose">Close</button>
       </div>
     </div>
   </div>

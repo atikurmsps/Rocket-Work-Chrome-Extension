@@ -3,16 +3,32 @@
    ============================================================ */
 const store = {
   async get(key, def) {
+    // prefer synced value, fall back to local, then localStorage
+    try {
+      if (chrome?.storage?.sync) {
+        const r = await chrome.storage.sync.get(key);
+        if (r[key] !== undefined) return r[key];
+      }
+    } catch (_) {}
     try {
       if (chrome?.storage?.local) {
         const r = await chrome.storage.local.get(key);
-        return r[key] ?? def;
+        if (r[key] !== undefined) return r[key];
       }
     } catch (_) {}
     const v = localStorage.getItem(key);
     return v ? JSON.parse(v) : def;
   },
   async set(key, val) {
+    // try sync first; on quota error (8KB/item — e.g. big logo data URLs) fall back to local
+    try {
+      if (chrome?.storage?.sync) {
+        await chrome.storage.sync.set({ [key]: val });
+        // clear any stale local copy so sync stays source of truth
+        try { await chrome.storage.local.remove(key); } catch (_) {}
+        return;
+      }
+    } catch (_) {}
     try {
       if (chrome?.storage?.local) { await chrome.storage.local.set({ [key]: val }); return; }
     } catch (_) {}
@@ -78,7 +94,21 @@ let state = { tasks: null, links: null, collapsed: false };
   renderSidebar();
   renderQuick();
   wireGlobals();
+  wireSync();
 })();
+
+/* live-update when sync pushes changes from another device */
+function wireSync() {
+  if (!chrome?.storage?.onChanged) return;
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'sync') return;
+    let dirty = false;
+    if (changes.tasks)     { state.tasks = changes.tasks.newValue; dirty = true; }
+    if (changes.links)     { state.links = changes.links.newValue; dirty = true; }
+    if (changes.collapsed) { state.collapsed = changes.collapsed.newValue; dirty = true; }
+    if (dirty) { renderSidebar(); renderQuick(); }
+  });
+}
 
 const saveTasks = () => store.set('tasks', state.tasks);
 const saveLinks = () => store.set('links', state.links);
@@ -410,11 +440,110 @@ function saveLink() {
 }
 
 /* ============================================================
+   Settings — export / import (tasks + links + collapsed)
+   ============================================================ */
+const EXPORT_VERSION = 1;
+
+function openSettingsModal() {
+  setSettingsNote('', '');
+  document.getElementById('settingsModal').classList.add('open');
+}
+function closeSettingsModal() {
+  document.getElementById('settingsModal').classList.remove('open');
+}
+function openHelpModal()  { document.getElementById('helpModal').classList.add('open'); }
+function closeHelpModal() { document.getElementById('helpModal').classList.remove('open'); }
+
+function setSettingsNote(msg, type) {
+  const el = document.getElementById('settingsNote');
+  el.textContent = msg;
+  el.className = 'settings-note' + (type ? ' ' + type : '');
+}
+
+function exportData() {
+  const payload = {
+    app: 'rocketwork',
+    version: EXPORT_VERSION,
+    exportedAt: new Date().toISOString(),
+    tasks: state.tasks,
+    links: state.links,
+    collapsed: state.collapsed
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `rocketwork-backup-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  setSettingsNote('Backup exported.', 'ok');
+}
+
+async function importData(file) {
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+
+    // accept our export shape OR a bare {tasks, links}
+    const tasks = data.tasks;
+    const links = data.links;
+    if (!tasks || !Array.isArray(tasks.active) || !Array.isArray(tasks.completed)) {
+      throw new Error('No valid tasks in file');
+    }
+    if (!Array.isArray(links)) {
+      throw new Error('No valid links in file');
+    }
+
+    state.tasks = tasks;
+    state.links = links;
+    state.collapsed = !!data.collapsed;
+
+    await Promise.all([
+      store.set('tasks', state.tasks),
+      store.set('links', state.links),
+      store.set('collapsed', state.collapsed)
+    ]);
+
+    renderSidebar();
+    renderQuick();
+    const n = tasks.active.length + tasks.completed.length;
+    setSettingsNote(`Imported ${n} task${n === 1 ? '' : 's'} and ${links.length} link${links.length === 1 ? '' : 's'}.`, 'ok');
+  } catch (err) {
+    setSettingsNote('Import failed: ' + err.message, 'err');
+  }
+}
+
+/* ============================================================
    Search + global wiring
    ============================================================ */
 function wireGlobals() {
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { closeLinkModal(); closeContextMenu(); }
+    if (e.key === 'Escape') { closeLinkModal(); closeContextMenu(); closeSettingsModal(); closeHelpModal(); }
+  });
+
+  // toolbar buttons
+  document.getElementById('helpBtn').addEventListener('click', openHelpModal);
+  document.getElementById('settingsBtn').addEventListener('click', openSettingsModal);
+  document.getElementById('helpClose').addEventListener('click', closeHelpModal);
+  document.getElementById('settingsClose').addEventListener('click', closeSettingsModal);
+  document.getElementById('helpModal').addEventListener('click', e => {
+    if (e.target.id === 'helpModal') closeHelpModal();
+  });
+  document.getElementById('settingsModal').addEventListener('click', e => {
+    if (e.target.id === 'settingsModal') closeSettingsModal();
+  });
+
+  // export / import
+  const importFile = document.getElementById('importFile');
+  document.getElementById('exportBtn').addEventListener('click', exportData);
+  document.getElementById('importBtn').addEventListener('click', () => importFile.click());
+  importFile.addEventListener('change', () => {
+    const f = importFile.files[0];
+    if (f) importData(f);
+    importFile.value = '';
   });
   // dismiss context menu on any outside interaction
   document.addEventListener('click', e => {
